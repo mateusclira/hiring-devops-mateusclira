@@ -83,7 +83,7 @@ jobs:
           push: true
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/meteorappMongo:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/meteormongo:${{ github.sha }}
 
   publish:
     name: Publish
