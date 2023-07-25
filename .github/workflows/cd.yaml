@@ -79,11 +79,11 @@ jobs:
       - name: Build and push image to dockerhub
         uses: docker/build-push-action@v4
         with:
-          file: ./app/node/Dockerfile
+          file: ./app/mongo/Dockerfile
           push: true
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/meteorapp:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/meteorappMongo:${{ github.sha }}
 
   publish:
     name: Publish
@@ -112,7 +112,8 @@ jobs:
       - name: Push
         uses: ad-m/github-push-action@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          secrets: |
+            GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
           branch: main
           repository: mateusclira/hiring-devops-mateusclira 
 
