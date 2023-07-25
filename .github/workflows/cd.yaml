@@ -28,12 +28,12 @@ jobs:
       - run: npm test
 
   docker_node:
-    name: Docker Login, build and Push image
+    name: Docker - Node
     needs: build
     runs-on: ubuntu-latest
     defaults:
           run:
-            working-directory: ./app/node
+            working-directory: ./app/node/
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -58,12 +58,12 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/meteorapp:${{ github.sha }}
 
   docker_mongo:
-    name: Docker Login, build and Push image
+    name: Docker - Mongo
     needs: docker_node
     runs-on: ubuntu-latest
     defaults:
           run:
-            working-directory: ./app/mongo
+            working-directory: ./app/mongo/
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
