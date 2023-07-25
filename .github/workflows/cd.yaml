@@ -97,10 +97,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.14.1'
+      - name: Update README.md
+        run: |
+          sed -i 's/mateusclira/hiring-devops-mateusclira'${{ github.event.mateusclira/hiring-devops-mateusclira }}'/' README.md
+          git config user.email "action@github.com"
+          git config user.name "GitHub Action"
 
       - name: Commit
         run: |
