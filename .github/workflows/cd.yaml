@@ -9,7 +9,9 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-
+    defaults:
+          run:
+            working-directory: ./app/node
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -28,6 +30,9 @@ jobs:
   docker_login_and_push:
     name: Docker Login
     runs-on: ubuntu-latest
+    defaults:
+          run:
+            working-directory: ./app/mongo
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
