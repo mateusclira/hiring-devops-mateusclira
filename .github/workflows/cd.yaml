@@ -97,11 +97,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Update README.md
+      - name: Update readme
         run: |
-          sed -i 's/mateusclira/hiring-devops-mateusclira'${{ github.event.mateusclira/hiring-devops-mateusclira }}'/' README.md
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
+          echo "## Docker Images" >> README.md
+          echo "" >> README.md
+          echo "### Node" >> README.md
+          echo "" >> README.md
+          echo "![Docker Image Version](https://img.shields.io/docker/v/${{ secrets.DOCKERHUB_USERNAME }}/meteorapp:${{ github.sha }}" >> README.md
+          echo "" >> README.md
+          echo "### Mongo" >> README.md
+          echo "" >> README.md
+          echo "![Docker Image Version](https://img.shields.io/docker/v/${{ secrets.DOCKERHUB_USERNAME }}/meteormongo:${{ github.sha }}" >> README.md
+          echo "" >> README.md
+          echo "### DockerHub" >> README.md
+          echo "" >> README.md
+          echo "### GitHub" >> README.md
+          echo "" >> README.md
 
       - name: Commit
         run: |
