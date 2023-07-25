@@ -10,8 +10,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     defaults:
-          run:
-            working-directory: ./app/node
+      run:
+        working-directory: ./app/node
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -32,8 +32,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     defaults:
-          run:
-            working-directory: ./app/node/
+      run:
+        working-directory: ./app/node/
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -80,7 +80,6 @@ jobs:
       - name: Build and push image to dockerhub
         uses: docker/build-push-action@v4
         with:
-          context: .
           file: ./Dockerfile
           push: true
           secrets: |
