@@ -1,4 +1,4 @@
-var mongoose = require('mongoose');
+const mongoose = require('mongoose');
 var statsd = require('./statsd');
 require('dotenv').config();
 var schema = mongoose.Schema({value: String});
@@ -7,7 +7,7 @@ var Values = mongoose.model('values', schema);
 module.exports = {
     connectDB: function() {
         // Utilize process.env.MONGODB_ADDON_URI para acessar o valor da variável no arquivo .env
-        mongoose.connect(process.env.MONGODB_ADDON_URI, { useNewUrlParser: true })
+        mongoose.connect(process.env.MONGODB_ADDON_URI)
             .then(() => {
                 console.log('Ok');
             })
@@ -16,7 +16,7 @@ module.exports = {
             });
     },
     updateGauge : function() {
-        Values.count(function(err, result) {
+        Values.countDocuments(function(err, result) {
             if(!err) {
                 statsd.gauge('values', result);
             }
