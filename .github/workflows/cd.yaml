@@ -50,7 +50,7 @@ jobs:
       - name: Build and push image to dockerhub
         uses: docker/build-push-action@v4
         with:
-          file: ./Dockerfile
+          file: ./app/node/Dockerfile
           push: true
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
@@ -79,7 +79,7 @@ jobs:
       - name: Build and push image to dockerhub
         uses: docker/build-push-action@v4
         with:
-          file: ./Dockerfile
+          file: ./app/node/Dockerfile
           push: true
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
