@@ -9,6 +9,9 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    defaults:
+          run:
+            working-directory: ./app/node
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -56,7 +59,7 @@ jobs:
 
   docker_mongo:
     name: Docker Login, build and Push image
-    needs: build
+    needs: docker_node
     runs-on: ubuntu-latest
     defaults:
           run:
@@ -86,7 +89,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: build
+    needs: docker_mongo
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
 
