@@ -1,10 +1,10 @@
 FROM node:18.14.1
 
+WORKDIR /usr/src/app
+
 COPY . .
 
-RUN npm install
-
-WORKDIR /usr/src/app
+RUN npm --verbose install
 
 USER node
 
