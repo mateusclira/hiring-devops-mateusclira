@@ -4,7 +4,7 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN npm --verbose install
+RUN npm install --force
 
 USER node
 
