@@ -17,6 +17,10 @@ sudo apt-get update
  
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
 
-export MONGODB_ADDON_URI="mongodb://meteorhiring:meteorhiring@ac-nhcvxhf-shard-00-00.bebrwbu.mongodb.net:27017/message?ssl=false&authSource=admin&replicaSet=atlas-1jchvv-shard-0"
+mkdir -p /node
 
-sudo docker run -e MONGODB_ADDON_URI=$MONGODB_ADDON_URI -d -p 80:80 mateusclira/meteorapp:v4 
+sudo rm docker-compose.yaml
+echo "${DOCKER}" | base64 -d > docker-compose.yaml
+echo "${DOCKER_NODE}" | base64 -d > /node/Dockerfile
+
+sudo docker compose up --build

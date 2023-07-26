@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  app:
+    build:
+      context: ./node
+      dockerfile: Dockerfile
+    container_name: app
+    entrypoint: "npm install && node ./bin/www"
+    restart: always
+    tty: true
+    ports:
+      - 3000:3000

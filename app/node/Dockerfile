@@ -4,8 +4,5 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-RUN npm install --force
-
 USER node
 
-ENTRYPOINT ["node", "./bin/www"]
