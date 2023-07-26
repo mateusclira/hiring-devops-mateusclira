@@ -58,7 +58,7 @@ jobs:
 
   publish:
     name: Publish
-    needs: docker_mongo
+    needs: docker_node
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     defaults:
