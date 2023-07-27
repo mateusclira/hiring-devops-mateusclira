@@ -1,39 +1,26 @@
 data "aws_availability_zones" "available" {}
 
-resource "aws_instance" "instance1" {
-  ami                         = "ami-0af9d24bd5539d7af"
-  instance_type               = "t3.micro" # used to set core count below
-  availability_zone           = "us-east-1a"
-  subnet_id                   = var.aws_subnet_private[0]
-  vpc_security_group_ids      = [var.ec2_sg]
-  key_name                    = aws_key_pair.key.key_name
+# resource "aws_launch_template" "ecs_launch_template" {
+#   name                   = "mateusclira-hiring"
+#   image_id               = "ami-0af9d24bd5539d7af"
+#   instance_type          = "t3.micro"
+#   key_name               = aws_key_pair.key.key_name
+#   user_data              = data.template_file.userdata.rendered
+#   vpc_security_group_ids = [var.ec2_sg]
+# }
 
-  user_data = data.template_file.userdata.rendered
-}
-
-resource "aws_instance" "instance2" {
-  ami                         = "ami-0af9d24bd5539d7af"
-  instance_type               = "t3.micro" # used to set core count below
-  availability_zone           = "us-east-1b"
-  subnet_id                   = var.aws_subnet_private[1]
-  vpc_security_group_ids      = [var.ec2_sg]
-  key_name                    = aws_key_pair.key.key_name
-
-  user_data = data.template_file.userdata.rendered
-}
-
-resource "aws_instance" "bastion" {
-  ami                         = "ami-0af9d24bd5539d7af"
-  instance_type               = "t3.micro" # used to set core count below
-  availability_zone           = "us-east-1a"
-  subnet_id                   = var.aws_subnet_public[0]
-  vpc_security_group_ids      = [var.bastion_sg]
-  associate_public_ip_address = true
-  key_name                    = aws_key_pair.key.key_name
-  tags = {
-    Name = "bastion"
-   }
-}
+# resource "aws_instance" "bastion" {
+#   ami                         = "ami-0af9d24bd5539d7af"
+#   instance_type               = "t3.micro" # used to set core count below
+#   availability_zone           = "us-east-1a"
+#   subnet_id                   = var.aws_subnet_public[0]
+#   vpc_security_group_ids      = [var.bastion_sg]
+#   associate_public_ip_address = true
+#   key_name                    = aws_key_pair.key.key_name
+#   tags = {
+#     Name = "bastion"
+#    }
+# }
 
 resource "aws_key_pair" "key" {
   key_name   = "key"
@@ -49,9 +36,79 @@ resource "aws_key_pair" "key" {
 # sudo rm /var/lib/cloud/instance/sem/config_scripts_user 
 # This is a necessary command to remove "cache" from the instances to run the user_data again
 
-data "template_file" "userdata" {
-  template = file("${path.module}/userdata.tpl")
-  vars = {
-    DOCKER_NODE = filebase64("${path.root}./app/node/Dockerfile")
+# data "template_file" "userdata" {
+#   template = file("${path.module}/userdata.tpl")
+#   vars = {
+#     DOCKER_NODE = filebase64("${path.root}./app/node/Dockerfile")
+#   }
+# }
+
+
+resource "aws_ecs_cluster" "default" {
+  name  = "mateusclira-cluster"
+}
+
+resource "aws_ecs_service" "aws_service" {
+  name                 = "mateusclira_service"
+  cluster              = aws_ecs_cluster.default.id
+#   launch_type          = "FARGATE" default ec2
+  task_definition      = aws_ecs_task_definition.aws-ecs-task.arn
+  scheduling_strategy  = "REPLICA"
+  desired_count        = 1
+  force_new_deployment = true
+
+  network_configuration {
+    subnets          = [var.aws_subnet_private[0], var.aws_subnet_private[1]]
+    assign_public_ip = false
+    security_groups = [
+      var.alb_sg
+    ]
   }
+
+  load_balancer {
+    target_group_arn = var.lb_arn
+    container_name   = "meteorapp"
+    container_port   = 80
+  }
+}
+
+data "template_file" "env_vars" {
+  template = file("${path.module}/env_vars.json")
+}
+
+resource "aws_ecs_task_definition" "aws-ecs-task" {
+  family = "${var.name}-task"
+
+  container_definitions = jsonencode([
+    {
+      "name": "meteorapp",
+      "instanceType": "t3.micro",
+      "image": "mateusclira/meteorapp:v5",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80
+        }
+      ],
+      "environment": [
+        {
+          "name": "ENV_VAR_1",
+          "value": "Value 1"
+        }
+      ],
+      "essential": true
+    }
+  ])
+
+  requires_compatibilities = ["EC2"]
+  network_mode             = "awsvpc"
+  memory                   = "512"
+  cpu                      = "256"
+  execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
+  task_role_arn            = aws_iam_role.ecsTaskExecutionRole.arn
+}
+
+
+data "aws_ecs_task_definition" "main" {
+  task_definition = aws_ecs_task_definition.aws-ecs-task.family
 }

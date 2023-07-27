@@ -19,4 +19,6 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 
 echo "${DOCKER_NODE}" | base64 -d > Dockerfile
 
-sudo docker run -d -p 80:80 mateusclira/meteorapp:db
+sudo docker pull mateusclira/meteorapp:v5
+
+sudo docker run -d -p 80:80 mateusclira/meteorapp:v5

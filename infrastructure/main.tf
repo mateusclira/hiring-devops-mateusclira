@@ -25,10 +25,10 @@ module "alb" {
     source     = "./alb"
     vpc_id     = module.vpc.vpc_id
     aws_subnet_public = module.vpc.aws_subnet_public
-    ec2_1_id   = module.ec2.ec2_1_id
-    ec2_2_id   = module.ec2.ec2_2_id
+    cluster_id = module.ec2.cluster_id
 
-    alb_sg = module.sg.alb_sg
+    alb_sg = module.sg.alb_sg_id
+    # sg_id  = module.sq.sg_id
 }
 
 module "ec2" {
@@ -37,8 +37,10 @@ module "ec2" {
     aws_subnet_private = module.vpc.aws_subnet_private
     aws_subnet_public  = module.vpc.aws_subnet_public
 
-    ec2_sg     = module.sg.ec2_sg
-    bastion_sg = module.sg.bastion_sg
+    alb_sg = module.sg.alb_sg_id
+    lb_arn = module.alb.lb_arn
+    aws_region = var.aws_region
+    name = var.name
 }
 
 module "sg" {

@@ -1,11 +1,7 @@
-output "alb_sg" {
+# output "sg_id" {
+#     value = aws_security_group.main.id
+# }
+
+output "alb_sg_id" {
     value = aws_security_group.alb.id
-}
-
-output "ec2_sg" {
-    value = aws_security_group.ec2.id 
-}
-
-output "bastion_sg" {
-    value = aws_security_group.bastion.id
 }
