@@ -52,8 +52,6 @@ resource "aws_key_pair" "key" {
 data "template_file" "userdata" {
   template = file("${path.module}/userdata.tpl")
   vars = {
-    DOCKER        = filebase64("${path.root}./app/docker-compose.yaml")
-    DOCKER_NODE   = filebase64("${path.root}./app/node/Dockerfile")
-
+    DOCKER_NODE = filebase64("${path.root}./app/node/Dockerfile")
   }
 }

@@ -1,6 +1,6 @@
 nodejs-mongodb-demo.iml
 /.idea/
-/node/node_modules/
+*/node_modules/*
 npm-debug.log
 db/
 
