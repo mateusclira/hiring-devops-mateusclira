@@ -28,7 +28,6 @@ module "alb" {
     cluster_id = module.ec2.cluster_id
 
     alb_sg = module.sg.alb_sg_id
-    # sg_id  = module.sq.sg_id
 }
 
 module "ec2" {
@@ -38,6 +37,8 @@ module "ec2" {
     aws_subnet_public  = module.vpc.aws_subnet_public
 
     alb_sg = module.sg.alb_sg_id
+    sg_id  = module.sg.sg_id
+    bastion_sg = module.sg.bastion_sg_id
     lb_arn = module.alb.lb_arn
     aws_region = var.aws_region
     name = var.name

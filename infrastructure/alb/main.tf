@@ -11,21 +11,30 @@ resource "aws_lb_target_group" "main" {
   port     = 80
   protocol = "HTTP"
   vpc_id   = var.vpc_id
-  target_type = "ip"
+  health_check {
+    healthy_threshold   = "3"
+    interval            = "300"
+    protocol            = "HTTP"
+    matcher             = "200"
+    timeout             = "3"
+    path                = "/v1/status"
+    unhealthy_threshold = "2"
+  }
 }
 
 resource "aws_lb_listener" "main" {
   load_balancer_arn = aws_lb.main.id
   port              = "80"
   protocol          = "HTTP"
+
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.main.id
   }
 }
 
-# resource "aws_lb_target_group_attachment" "vpc" {
-#   target_group_arn = aws_lb_target_group.main.arn
-#   target_id        = var.vpc_id
-#   port             = 80
-# }
+resource "aws_lb_target_group_attachment" "ecs" {
+  target_group_arn = aws_lb_target_group.main.id
+  target_id        = var.cluster_id
+  port             = 80
+}
