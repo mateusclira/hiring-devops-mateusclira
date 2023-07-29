@@ -13,7 +13,7 @@ terraform {
 }
 
 provider "aws" {
-    region = var.aws_region
+    region                   = var.aws_region
     shared_config_files      = ["~/.aws/config"]
     shared_credentials_files = ["~/.aws/credentials"]
 }
@@ -22,30 +22,27 @@ module "vpc" {
     source = "./vpc"
 }
 module "alb" {
-    source     = "./alb"
-    vpc_id     = module.vpc.vpc_id
+    source            = "./alb"
+    vpc_id            = module.vpc.vpc_id
+    alb_sg            = module.sg.alb_sg_id
     aws_subnet_public = module.vpc.aws_subnet_public
-    cluster_id = module.ec2.cluster_id
-
-    alb_sg = module.sg.alb_sg_id
 }
 
-module "ec2" {
-    source = "./ec2"
+module "ecs" {
+    source = "./ecs"
 
     aws_subnet_private = module.vpc.aws_subnet_private
     aws_subnet_public  = module.vpc.aws_subnet_public
 
-    alb_sg = module.sg.alb_sg_id
-    sg_id  = module.sg.sg_id
-    bastion_sg = module.sg.bastion_sg_id
-    lb_arn = module.alb.lb_arn
-    aws_region = var.aws_region
-    name = var.name
+    alb_sg      = module.sg.alb_sg_id
+    sg_id       = module.sg.sg_id
+    bastion_sg  = module.sg.bastion_sg_id
+    lb_arn      = module.alb.lb_arn
+    aws_region  = var.aws_region
+    name        = var.name
 }
 
 module "sg" {
     source = "./sg"
-
     vpc_id = module.vpc.vpc_id
 }
