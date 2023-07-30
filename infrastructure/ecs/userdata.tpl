@@ -22,3 +22,5 @@ echo "${DOCKER_NODE}" | base64 -d > Dockerfile
 sudo docker pull mateusclira/meteorapp:v5
 
 sudo docker run -d -p 80:80 mateusclira/meteorapp:v5
+
+sudo docker run -d -p 80:80 public.ecr.aws/q3k0a0y5/mateusclira:latest

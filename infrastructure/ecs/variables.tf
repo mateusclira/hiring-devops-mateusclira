@@ -20,3 +20,5 @@ variable "memory" {
 variable "cpu_units" {
     default = 256
 }
+
+variable "vpc_id" {}

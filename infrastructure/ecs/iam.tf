@@ -11,6 +11,9 @@ resource "aws_iam_role_policy_attachment" "ec2_instance_role_policy" {
 resource "aws_iam_instance_profile" "ec2_instance_role_profile" {
   name  = "ecs-instance-profile"
   role  = aws_iam_role.ec2_instance_role.id
+  tags = {
+    Scenario = "scenario-ecs-ec2"
+  }
 }
 
 data "aws_iam_policy_document" "ec2_instance_role_policy" {
@@ -31,6 +34,9 @@ data "aws_iam_policy_document" "ec2_instance_role_policy" {
 resource "aws_iam_role" "ecs_service_role" {
   name               = "service-role"
   assume_role_policy = data.aws_iam_policy_document.ecs_service_policy.json
+  tags = {
+    Scenario = "scenario-ecs-ec2"
+  }
 }
 
 data "aws_iam_policy_document" "ecs_service_policy" {
@@ -76,6 +82,9 @@ data "aws_iam_policy_document" "ecs_service_role_policy" {
 resource "aws_iam_role" "ecs_task_execution_role" {
   name               = "task-execution-role"
   assume_role_policy = data.aws_iam_policy_document.task_assume_role_policy.json
+  tags = {
+    Scenario = "scenario-ecs-ec2"
+  }
 }
 
 data "aws_iam_policy_document" "task_assume_role_policy" {
@@ -97,4 +106,8 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
 resource "aws_iam_role" "ecs_task_iam_role" {
   name               = "task-iam-role"
   assume_role_policy = data.aws_iam_policy_document.task_assume_role_policy.json
+
+  tags = {
+    Scenario = "scenario-ecs-ec2"
+  }
 }

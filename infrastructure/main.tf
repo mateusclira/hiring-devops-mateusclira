@@ -40,6 +40,7 @@ module "ecs" {
     lb_arn      = module.alb.lb_arn
     aws_region  = var.aws_region
     name        = var.name
+    vpc_id      = module.vpc.vpc_id
 }
 
 module "sg" {

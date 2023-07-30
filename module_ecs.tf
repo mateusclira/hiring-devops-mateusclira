@@ -52,12 +52,12 @@ data "template_file" "user_data" {
 }
 
  resource "aws_autoscaling_group" "general" {
-  desired_capacity   = 1
-  max_size           = 1
-  min_size           = 1
-  health_check_grace_period = 300
+  desired_capacity          = 1
+  max_size                  = 1
+  min_size                  = 1
+  health_check_grace_period = 30
   health_check_type         = "EC2"
-  protect_from_scale_in = true
+  protect_from_scale_in     = true
 
   vpc_zone_identifier = [var.aws_subnet_private[0], var.aws_subnet_private[1]]
  launch_template {
@@ -66,6 +66,14 @@ data "template_file" "user_data" {
   }
   instance_refresh {
     strategy = "Rolling"
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+  tag {
+    key                 = "Name"
+    value               = "ASG"
+    propagate_at_launch = true
   }
   tag {
     key                 = "Scenario"
@@ -101,10 +109,11 @@ module "ecs" {
 module "ecs_service" {
   source  = "terraform-aws-modules/ecs/aws//modules/service"
   
-  health_check_grace_period_seconds = 300
+  health_check_grace_period_seconds = 30
   name                              = "mateusclira-service"
   cluster_arn                       = module.ecs.arn
   requires_compatibilities          = ["EC2"]
+  iam_role_arn                      = aws_iam_role.ecs_service_role.arn
 
   capacity_provider_strategy = {
   ex-2 = {
@@ -116,24 +125,10 @@ module "ecs_service" {
   volume = {
     my-vol = {}
   }
-
       # Container definition(s)
   container_definitions = {
     meteorapp = {
-      cpu       = 1024
-      memory    = 2048
-      essential = false
-      image     = "mateusclira/meteorapp:v5"
-      firelens_configuration = {
-        type = "meteorapp"
-      }
-      memory_reservation = 65
-    }
-    meteorapp = {
-      cpu       = 1024
-      memory    = 2048
-      essential = true
-      image     = "mateusclira/meteorapp:v5"
+      image     = "public.ecr.aws/q3k0a0y5/mateusclira:latest"
       port_mappings = [
         {
           name          = "meteorapp"
@@ -148,9 +143,7 @@ module "ecs_service" {
       }
     ]
       # Example image used requires access to write to root filesystem
-    readonly_root_filesystem = false
-    enable_cloudwatch_logging = false
-    memory_reservation = 100
+      readonly_root_filesystem = false
   }
   }
   service_connect_configuration = {
@@ -172,15 +165,15 @@ module "ecs_service" {
     }
   }
   subnet_ids = [
-    var.aws_subnet_private[0],
-    var.aws_subnet_private[1]
+    var.aws_subnet_public[0],
+    var.aws_subnet_public[1]
   ]
   security_group_rules = {
     alb_ingress_3000 = {
       type                     = "ingress"
-      from_port                = 80
-      to_port                  = 80
-      protocol                 = "tcp"
+      from_port                = 0
+      to_port                  = 0
+      protocol                 = "-1"
       description              = "Service port"
       source_security_group_id = var.alb_sg
     }
@@ -196,6 +189,8 @@ module "ecs_service" {
     Environment = "Development"
     Project     = "Example"
   }
+
+  # depends_on = [ aws_ecr_repository.aws-ecr ]
 }
   
 resource "aws_service_discovery_http_namespace" "main" {

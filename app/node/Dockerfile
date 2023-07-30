@@ -4,6 +4,6 @@ WORKDIR /usr/src/app
 
 COPY . .
 
-USER node
+RUN npm install
 
 ENTRYPOINT [ "node", "./bin/www" ]
