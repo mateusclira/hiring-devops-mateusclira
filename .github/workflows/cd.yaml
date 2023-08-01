@@ -1,7 +1,7 @@
-name: cdmateusclira
+name: cicdmateusclira
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -28,10 +28,11 @@ jobs:
       - run: npm run build --if-present
       - run: npm test
 
-  docker_node:
+  deploy_dev:
     name: Docker - Node
     needs: build
     runs-on: ubuntu-latest
+    environment: dev
     defaults:
       run:
         working-directory: ./app/node/
@@ -57,11 +58,12 @@ jobs:
             GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/meteorapp:${{ github.sha }}
 
-  publish:
-    name: Publish
+  publish_dev:
+    name: Publish in DEV
     needs: docker_node
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    environment: dev
+    if: github.ref == 'refs/heads/develop'
     defaults:
           run:
             working-directory: ./app
@@ -75,9 +77,11 @@ jobs:
           echo "" >> README.md
           echo "### Node" >> README.md
           echo "" >> README.md
-          echo "![Docker Image Version](https://img.shields.io/docker/v/${{ secrets.DOCKERHUB_USERNAME }}/meteorapp:${{ github.sha }}" >> README.md
+          echo "![Docker Image Version (latest semver)](https://img.shields.io/docker/v/${{ secrets.DOCKERHUB_USERNAME }}/meteorapp?sort=semver)" >> README.md
           echo "" >> README.md
           echo "### DockerHub" >> README.md
+          echo "" >> README.md
+          echo "[DockerHub](https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }})" >> README.md
           echo "" >> README.md
           echo "### GitHub" >> README.md
           echo "" >> README.md
@@ -97,4 +101,76 @@ jobs:
           branch: main
           repository: mateusclira/hiring-devops-mateusclira 
 
-      
+  deploy_prod:
+    name: AWS - Node | PRD
+    needs: build
+    runs-on: ubuntu-latest
+    environment: prd
+    defaults:
+      run:
+        working-directory: ./app/node/
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to AWS ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          role-to-assume: arn:aws:iam::608636080729:role/github-actions
+          aws-region: us-east-1
+
+      - run: docker build -t mateusclira .
+      - run: docker tag mateusclira:latest public.ecr.aws/q3k0a0y5/mateusclira:latest
+
+      - name: Push to ECR
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: us-east-1
+          image: mateusclira:latest
+
+  publish_prd:
+    name: Publish in PRD
+    needs: deploy_prod
+    runs-on: ubuntu-latest
+    environment: prd
+    if: github.ref == 'refs/heads/main'
+    defaults:
+          run:
+            working-directory: ./app
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update readme
+        run: |
+          echo "## Docker Images" >> README.md
+          echo "" >> README.md
+          echo "### Node" >> README.md
+          echo "" >> README.md
+          echo "![Docker Image Version (latest semver)](https://img.shields.io/docker/v/${{ secrets.DOCKERHUB_USERNAME }}/meteorapp?sort=semver)" >> README.md
+          echo "" >> README.md
+          echo "### DockerHub" >> README.md
+          echo "" >> README.md
+          echo "[DockerHub](https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }})" >> README.md
+          echo "" >> README.md
+          echo "### GitHub" >> README.md
+          echo "" >> README.md
+
+      - name: Commit
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -am "updating terraform"
+
+      - name: Push
+        uses: ad-m/github-push-action@master
+        with:
+          secrets: |
+            GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
+          branch: main
+          repository: mateusclira/hiring-devops-mateusclira 

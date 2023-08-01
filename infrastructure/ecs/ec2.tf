@@ -22,8 +22,8 @@ data "aws_ami" "amazon_linux_2" {
 }
 
 resource "aws_instance" "bastion" {
-  ami                         = "ami-0af9d24bd5539d7af"
-  instance_type               = "t3.micro" # used to set core count below
+  ami                         = data.aws_ami.amazon_linux_2.id
+  instance_type               = var.instance_type
   subnet_id                   = var.aws_subnet_public[0]
   vpc_security_group_ids      = [var.bastion_sg]
   associate_public_ip_address = true
@@ -62,14 +62,14 @@ data "template_file" "user_data" {
     }
 
 resource "aws_ecs_cluster" "default" {
-  name  = "mateusclira-cluster"
+  name  = "${var.name}-cluster"
   tags = {
     Scenario = "scenario-ecs-ec2"
   }
 }
 
  resource "aws_launch_template" "ecs_launch_template" {
-  name                   = "mateusclira-template"
+  name                   = "template-${var.name}"
   image_id               = data.aws_ami.amazon_linux_2.id
   instance_type          = "t3.micro"
   key_name               = aws_key_pair.key.key_name
@@ -87,9 +87,9 @@ resource "aws_ecs_cluster" "default" {
 }
 
  resource "aws_autoscaling_group" "general" {
-  name                      = "mateusclira-asg"
-  max_size                  = 1
-  min_size                  = 1
+  name                      = "${var.name}-asg"
+  max_size                  = var.max_size
+  min_size                  = var.min_size
   health_check_type         = "EC2"
   protect_from_scale_in     = true
   vpc_zone_identifier       = [var.aws_subnet_private[0], var.aws_subnet_private[1]]
@@ -124,8 +124,8 @@ resource "aws_ecs_capacity_provider" "cas" {
     managed_termination_protection = "ENABLED"
 
     managed_scaling {
-      maximum_scaling_step_size = 1
-      minimum_scaling_step_size = 1
+      maximum_scaling_step_size = var.max_size
+      minimum_scaling_step_size = var.min_size
       status                    = "ENABLED"
       target_capacity           = 100
     }
@@ -141,37 +141,40 @@ resource "aws_ecs_cluster_capacity_providers" "cas" {
 }
 
 resource "aws_ecs_service" "aws_service" {
-  name                 = "mateusclira_service"
-  cluster              = aws_ecs_cluster.default.id
-  launch_type          = "EC2" 
+  name                              = "${var.name}_service"
+  cluster                           = aws_ecs_cluster.default.id
+  launch_type                       = "EC2" 
   health_check_grace_period_seconds = 30
-  task_definition      = aws_ecs_task_definition.default.arn
-  #iam_role             = aws_iam_role.ecs_service_role.arn
-  desired_count        = 1
+  task_definition                   = aws_ecs_task_definition.default.arn
+  desired_count                     = 1
+
+  #iam_role            = aws_iam_role.ecs_service_role.arn  # This is iam_role parameter is not possible to use because I'm using network_configuration
 
   load_balancer {
     target_group_arn = var.lb_arn
-    container_name   = "meteorapp"
-    container_port   = 3000
+    container_name   = var.container_name
+    container_port   = var.container_port
   }
 
   network_configuration {
-    subnets = var.aws_subnet_private
-    security_groups = [aws_security_group.service_security_group.id, var.alb_sg]
+    subnets          = var.aws_subnet_private
+    security_groups  = [aws_security_group.service_security_group.id, var.alb_sg]
     assign_public_ip = false
   }
+
   ordered_placement_strategy {
     type  = "spread"
     field = "attribute:ecs.availability-zone"
   }
+
   tags = {
     Scenario = "scenario-ecs-ec2"
   }
 }
 
 resource "aws_security_group" "service_security_group" {
-  name = "service_security_group"
-  vpc_id      = var.vpc_id
+  name   = "service-sg-${var.env_id}"
+  vpc_id = var.vpc_id
   ingress {
     from_port = 0
     to_port   = 0
@@ -196,15 +199,15 @@ resource "aws_ecs_task_definition" "default" {
   network_mode       = "awsvpc"
   container_definitions = jsonencode([
     {
-      name         = "meteorapp"
+      name         = var.container_name
       image        = "public.ecr.aws/q3k0a0y5/mateusclira:latest"
-      cpu          = 256
-      memory       = 512
+      cpu          = var.cpu_units
+      memory       = var.memory
       essential    = true
       portMappings = [
         {
-          containerPort = 3000
-          hostPort      = 3000
+          containerPort = var.container_port
+          hostPort      = var.container_port
           protocol      = "tcp"
         }
       ]
@@ -216,12 +219,13 @@ resource "aws_ecs_task_definition" "default" {
   }
 }
 
-data "aws_ecs_task_definition" "main" {
-  task_definition = aws_ecs_task_definition.default.family
-}
+# data "aws_ecs_task_definition" "main" {
+#   task_definition = aws_ecs_task_definition.default.family
+# }
+
 resource "aws_appautoscaling_target" "ecs_target" {
-  max_capacity       = 1
-  min_capacity       = 1
+  max_capacity       = var.max_size
+  min_capacity       = var.min_size
   resource_id        = "service/${aws_ecs_cluster.default.name}/${aws_ecs_service.aws_service.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
