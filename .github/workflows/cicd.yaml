@@ -91,14 +91,14 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git commit -am "updating terraform"
+          git commit -am "testing cicd
 
       - name: Push
         uses: ad-m/github-push-action@master
         with:
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.METEOR_TOKEN }}
-          branch: main
+          branch: develop
           repository: mateusclira/hiring-devops-mateusclira 
 
   deploy_prod:
