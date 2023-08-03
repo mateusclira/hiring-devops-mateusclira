@@ -28,6 +28,37 @@ jobs:
       - run: npm run build --if-present
       - run: npm test
 
+  build_infra:
+    name: Build Infra
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./infrastructure
+    steps:
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.4.4
+      - name: Terraform Init
+        id: init
+        env:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: us-east-1
+        run: terraform init \
+          -backend-config="key=${{ secrets.STATE_KEY }}" \
+          -backend-config="region=us-east-1" \
+          -backend-config="access-key-id=${{ secrets.AWS_ACCESS_KEY_ID }}" \
+          -backend-config="secret-access-key=${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true
+
   deploy_dev:
     name: Docker - Node | DEV
     needs: build
